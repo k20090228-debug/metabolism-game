@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>筋トレ代謝リアクター（仮）</title>
+<style>
+  :root {
+    --bg: #101827; --panel: #19263a; --panel2: #22334c; --text: #edf4ff;
+    --muted: #a9bad2; --cyan: #58d8e8; --green: #72e0a2; --yellow: #ffd166;
+    --red: #ff7185; --purple: #b9a0ff; --line: #344760;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: radial-gradient(circle at top, #20304a 0, var(--bg) 58%); color: var(--text); font-family: system-ui, -apple-system, "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif; }
+  button { font: inherit; cursor: pointer; border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; color: var(--text); background: var(--panel2); transition: transform .12s, border-color .12s, background .12s; }
+  button:hover { transform: translateY(-1px); border-color: var(--cyan); }
+  button:focus-visible { outline: 3px solid var(--yellow); outline-offset: 2px; }
+  button:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+  .wrap { max-width: 1180px; margin: auto; padding: 24px 18px 36px; }
+  header { display:flex; gap:16px; justify-content:space-between; align-items:flex-start; margin-bottom:18px; }
+  h1 { margin:0; font-size:clamp(1.45rem, 3vw, 2.25rem); letter-spacing:.02em; }
+  .subtitle { color:var(--muted); margin:7px 0 0; font-size:.95rem; }
+  .badge { color:var(--cyan); border:1px solid #376d7b; background:#12333e; padding:6px 10px; border-radius:99px; white-space:nowrap; font-size:.8rem; }
+  .layout { display:grid; grid-template-columns: minmax(0, 1.08fr) minmax(320px, .92fr); gap:16px; align-items:start; }
+  .panel { background:linear-gradient(150deg, rgba(31,47,70,.96), rgba(22,33,50,.97)); border:1px solid var(--line); border-radius:18px; padding:18px; box-shadow:0 14px 35px #0002; }
+  .panel h2 { font-size:1.05rem; margin:0 0 14px; }
+  .scene { min-height:280px; position:relative; overflow:hidden; border-radius:14px; border:1px solid #3b516c; background:linear-gradient(#203a55 0%, #17283e 72%, #26374b 72%, #1a293b 100%); display:grid; place-items:center; }
+  .scene::before { content:""; position:absolute; width:250px; height:250px; border-radius:50%; background:#58d8e811; filter:blur(12px); }
+  .scene-label { position:absolute; top:12px; left:14px; color:#bcd0e9; font-size:.78rem; letter-spacing:.08em; }
+  .character { position:relative; width:190px; height:205px; margin-top:26px; }
+  .head { position:absolute; left:76px; top:8px; width:42px; height:46px; border-radius:45% 45% 48% 48%; background:#f0bd91; border:3px solid #27384c; z-index:3; }
+  .hair { position:absolute; left:73px; top:4px; width:48px; height:20px; background:#473b40; border-radius:50% 50% 20% 15%; z-index:4; }
+  .body-shape { position:absolute; left:57px; top:48px; width:80px; height:77px; border-radius:25px 25px 17px 17px; background:#56c5d5; border:3px solid #27384c; z-index:2; }
+  .shorts { position:absolute; left:59px; top:113px; width:76px; height:38px; background:#526b9b; border:3px solid #27384c; border-radius:5px 5px 12px 12px; z-index:2; }
+  .leg { position:absolute; top:143px; width:24px; height:48px; background:#f0bd91; border:3px solid #27384c; border-radius:8px 8px 5px 5px; z-index:1; }
+  .leg.left { left:66px; transform:rotate(4deg); } .leg.right { left:104px; transform:rotate(-4deg); }
+  .shoe { position:absolute; top:180px; width:38px; height:14px; border-radius:12px 12px 5px 5px; background:#e8edf7; border:3px solid #27384c; z-index:2; }
+  .shoe.left { left:55px; } .shoe.right { left:102px; }
+  .arm { position:absolute; width:21px; height:64px; top:55px; background:#f0bd91; border:3px solid #27384c; border-radius:14px; z-index:4; transform-origin:top center; }
+  .arm.left { left:48px; transform:rotate(25deg); } .arm.right { left:125px; transform:rotate(-25deg); }
+  .hand { position:absolute; width:19px; height:20px; border-radius:50%; background:#f0bd91; border:2px solid #27384c; z-index:5; }
+  .hand.left { left:32px; top:105px; } .hand.right { left:139px; top:105px; }
+  .dumbbell { position:absolute; left:17px; top:108px; width:156px; height:22px; z-index:6; transform-origin:center; transition:transform .24s ease; }
+  .bar { position:absolute; left:27px; top:8px; width:102px; height:7px; background:#dce7f4; border-radius:4px; border:1px solid #7c91aa; }
+  .plate { position:absolute; top:0; width:19px; height:22px; border-radius:5px; background:#9fb3ce; border:3px solid #dce7f4; box-shadow:inset 0 0 0 2px #637c9b; }
+  .plate.p1 { left:16px; } .plate.p2 { left:121px; }
+  .character.lift .dumbbell { transform:translateY(-38px) rotate(-4deg); }
+  .character.lift .arm.left { transform:rotate(-8deg); } .character.lift .arm.right { transform:rotate(8deg); }
+  .scene-caption { position:absolute; bottom:9px; right:12px; color:#bcd0e9; font-size:.8rem; }
+  .weight-row, .action-row { display:flex; gap:8px; flex-wrap:wrap; margin-top:13px; }
+  .weight-btn { flex:1; min-width:78px; }
+  .weight-btn.active { border-color:var(--yellow); background:#594b2b; color:#ffe4a0; box-shadow:0 0 0 1px #ffd16633 inset; }
+  .action-row button { flex:1; min-width:140px; font-weight:700; }
+  .eat { background:#1d5949; border-color:#3e9d7c; } .lift-btn { background:#244d70; border-color:#4184b5; }
+  .reset { background:transparent; color:var(--muted); }
+  .stat { margin:15px 0; } .stat-head { display:flex; justify-content:space-between; gap:10px; font-size:.91rem; margin-bottom:7px; }
+  .stat-head span:last-child { color:var(--muted); font-variant-numeric:tabular-nums; }
+  .track { height:13px; background:#0e1725; border:1px solid #34465d; border-radius:99px; overflow:hidden; }
+  .fill { width:50%; height:100%; border-radius:99px; transition:width .25s ease; }
+  #atpFill { background:linear-gradient(90deg,#2b9fc3,#62e4ed); }
+  #glyFill { background:linear-gradient(90deg,#4ca66b,#8be6a4); }
+  #oxyFill { background:linear-gradient(90deg,#537ed2,#91b7ff); }
+  #fatigueFill { background:linear-gradient(90deg,#e9ad45,#ff7185); }
+  .mechanism { margin-top:16px; border:1px solid #3b5871; border-radius:14px; padding:15px; background:#0f1c2b; }
+  .mechanism-top { display:flex; gap:8px; align-items:center; margin-bottom:8px; }
+  .dot { width:10px; height:10px; border-radius:50%; background:var(--green); box-shadow:0 0 12px currentColor; flex-shrink:0; }
+  #routeName { color:var(--green); font-weight:800; }
+  #routeText { color:#c9d7e9; line-height:1.65; margin:0; font-size:.92rem; }
+  .concept { margin-top:14px; border-left:3px solid var(--purple); padding:10px 12px; background:#302b4b55; border-radius:0 10px 10px 0; }
+  .concept strong { display:block; color:#d3c5ff; font-size:.86rem; margin-bottom:4px; }
+  .concept p { margin:0; font-size:.88rem; line-height:1.6; color:#d9d6ed; }
+  .log { margin-top:14px; max-height:115px; overflow:auto; padding:0; list-style:none; }
+  .log li { padding:7px 0; border-bottom:1px solid #ffffff12; font-size:.82rem; color:var(--muted); }
+  .log li:first-child { color:var(--text); }
+  .notice { margin-top:12px; min-height:24px; font-weight:700; color:var(--yellow); }
+  .footer-note { color:#8fa3be; font-size:.78rem; line-height:1.6; margin:17px 2px 0; }
+  @media (max-width:780px) { .layout { grid-template-columns:1fr; } header { align-items:flex-start; } .scene { min-height:265px; } }
+  @media (prefers-reduced-motion: reduce) { *,*::before,*::after { transition:none !important; animation:none !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>🏋️ 筋トレ代謝リアクター <span style="color:#8fa3be;font-size:.62em">（プロトタイプ）</span></h1>
+      <p class="subtitle">栄養を補給し、筋肉を動かして、細胞のエネルギー戦略を観察しよう。</p>
+    </div>
+    <span class="badge">BIOLOGY LAB / 01</span>
+  </header>
+
+  <main class="layout">
+    <section class="panel">
+      <h2>01 — トレーニング・シミュレーター</h2>
+      <div class="scene" aria-label="ダンベルを持ち上げるキャラクター">
+        <div class="scene-label">MUSCLE UNIT / ACTIVE</div>
+        <div class="character" id="character">
+          <div class="head"></div><div class="hair"></div><div class="body-shape"></div><div class="shorts"></div>
+          <div class="leg left"></div><div class="leg right"></div><div class="shoe left"></div><div class="shoe right"></div>
+          <div class="arm left"></div><div class="arm right"></div><div class="hand left"></div><div class="hand right"></div>
+          <div class="dumbbell"><div class="bar"></div><div class="plate p1"></div><div class="plate p2"></div></div>
+        </div>
+        <div class="scene-caption" id="sceneCaption">準備完了：栄養と酸素を確認</div>
+      </div>
+      <div style="margin-top:16px;font-weight:700;font-size:.9rem">ダンベルの重さを選択</div>
+      <div class="weight-row" role="group" aria-label="ダンベルの重さ">
+        <button class="weight-btn" data-weight="light" aria-pressed="false">軽い</button>
+        <button class="weight-btn active" data-weight="medium" aria-pressed="true">中くらい</button>
+        <button class="weight-btn" data-weight="heavy" aria-pressed="false">重い</button>
+      </div>
+      <div class="action-row">
+        <button class="eat" id="eatBtn">🍚 白米を食べる</button>
+        <button class="lift-btn" id="liftBtn">💪 ダンベルを上げる</button>
+      </div>
+      <div class="action-row">
+        <button class="reset" id="resetBtn">↻ 実験をリセット</button>
+      </div>
+      <div class="notice" id="notice" role="status" aria-live="polite">まずは白米を食べるか、ダンベルを上げてみよう。</div>
+      <div class="concept">
+        <strong>🧠 今回の学習ポイント</strong>
+        <p id="learningPoint">食物中のデンプンは消化でブドウ糖などになり、吸収後、余ったブドウ糖はグリコーゲンとして肝臓や筋肉に蓄えられます。</p>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>02 — 細胞内リソース・モニター</h2>
+      <div class="stat">
+        <div class="stat-head"><span>⚡ ATP（すぐ使えるエネルギー）</span><span id="atpValue">70 / 100</span></div>
+        <div class="track" role="progressbar" aria-label="ATP" aria-valuemin="0" aria-valuemax="100" aria-valuenow="70" id="atpBar"><div class="fill" id="atpFill"></div></div>
+      </div>
+      <div class="stat">
+        <div class="stat-head"><span>🍬 グリコーゲン（糖の貯蔵）</span><span id="glyValue">70 / 100</span></div>
+        <div class="track" role="progressbar" aria-label="グリコーゲン" aria-valuemin="0" aria-valuemax="100" aria-valuenow="70" id="glyBar"><div class="fill" id="glyFill"></div></div>
+      </div>
+      <div class="stat">
+        <div class="stat-head"><span>🫁 酸素供給（相対値）</span><span id="oxyValue">80 / 100</span></div>
+        <div class="track" role="progressbar" aria-label="酸素供給" aria-valuemin="0" aria-valuemax="100" aria-valuenow="80" id="oxyBar"><div class="fill" id="oxyFill"></div></div>
+      </div>
+      <div class="stat">
+        <div class="stat-head"><span>🌡️ 疲労指標（乳酸などに関連）</span><span id="fatigueValue">10 / 100</span></div>
+        <div class="track" role="progressbar" aria-label="疲労指標" aria-valuemin="0" aria-valuemax="100" aria-valuenow="10" id="fatigueBar"><div class="fill" id="fatigueFill"></div></div>
+      </div>
+
+      <div class="mechanism" aria-live="polite">
+        <div class="mechanism-top"><span class="dot" id="routeDot"></span><span id="routeName">待機中：エネルギー代謝</span></div>
+        <p id="routeText">筋収縮に直接使われるのはATPです。ATPは使うとADPとリン酸に変わるため、細胞は代謝によってATPを再合成します。</p>
+      </div>
+      <h2 style="margin-top:18px;margin-bottom:5px">実験ログ</h2>
+      <ul class="log" id="log"><li>システム起動：ATP・糖貯蔵・酸素を確認。</li></ul>
+      <p class="footer-note">※ 学習用の簡略モデルです。実際の筋肉では、解糖系・酸化的リン酸化・ホスファゲン系などが同時に働きます。疲労は乳酸だけで決まるものではなく、乳酸は運動中に再利用もされます。</p>
+    </section>
+  </main>
+</div>
+<script>
+(() => {
+  const initial = { atp: 70, glycogen: 70, oxygen: 80, fatigue: 10 };
+  let s = { ...initial };
+  let weight = "medium";
+  let lockedUntil = 0;
+  let lastRoute = "idle";
+  let liftTimer = null;
+
+  const $ = id => document.getElementById(id);
+  const clamp = (v, min = 0, max = 100) => Math.max(min, Math.min(max, v));
+  const setText = (id, value) => { $(id).textContent = value; };
+
+  function render() {
+    const items = [
+      ["atp", "atpValue", "atpFill", "atpBar"],
+      ["glycogen", "glyValue", "glyFill", "glyBar"],
+      ["oxygen", "oxyValue", "oxyFill", "oxyBar"],
+      ["fatigue", "fatigueValue", "fatigueFill", "fatigueBar"]
+    ];
+    items.forEach(([key, valueId, fillId, barId]) => {
+      const v = Math.round(s[key]);
+      setText(valueId, `${v} / 100`);
+      $(fillId).style.width = `${v}%`;
+      $(barId).setAttribute("aria-valuenow", v);
+    });
+    const locked = Date.now() < lockedUntil;
+    $("eatBtn").disabled = locked;
+    $("liftBtn").disabled = locked;
+    $("sceneCaption").textContent = locked ? "回復中：少し休もう" : "準備完了：栄養と酸素を確認";
+  }
+
+  function log(message) {
+    const li = document.createElement("li");
+    li.textContent = `${new Date().toLocaleTimeString("ja-JP", {hour:"2-digit", minute:"2-digit", second:"2-digit"})} — ${message}`;
+    $("log").prepend(li);
+    while ($("log").children.length > 8) $("log").lastElementChild.remove();
+  }
+
+  function mechanism(name, text, color, point) {
+    setText("routeName", name);
+    setText("routeText", text);
+    $("routeName").style.color = color;
+    $("routeDot").style.background = color;
+    $("routeDot").style.color = color;
+    setText("learningPoint", point);
+  }
+
+  function animateLift() {
+    const c = $("character");
+    c.classList.remove("lift");
+    void c.offsetWidth;
+    c.classList.add("lift");
+    clearTimeout(liftTimer);
+    liftTimer = setTimeout(() => c.classList.remove("lift"), 520);
+  }
+
+  function eat() {
+    if (Date.now() < lockedUntil) return;
+    const before = s.glycogen;
+    s.glycogen = clamp(s.glycogen + 28);
+    s.atp = clamp(s.atp + 5);
+    mechanism(
+      "栄養補給：同化・糖の貯蔵",
+      "白米の主成分であるデンプンは消化でブドウ糖などに分解されます。吸収されたブドウ糖は、筋肉や肝臓でグリコーゲンとして合成・貯蔵されます。ATPそのものを大量に食べて補給するわけではありません。",
+      "#72e0a2",
+      "同化は小さな分子などから物質を合成する反応。糖の貯蔵にはエネルギーが必要で、運動時にはグリコーゲンを分解して代謝に利用します。"
+    );
+    setText("notice", before === 100 ? "グリコーゲンは満タン！運動に備えよう。" : "栄養補給！糖の貯蔵が増えました。");
+    log("白米を補給：グリコーゲンを蓄えた。");
+    render();
+  }
+
+  function lift() {
+    if (Date.now() < lockedUntil) return;
+    if (s.glycogen < 5 && s.atp < 12) {
+      mechanism("エネルギー不足", "ATPと糖の貯蔵が少なく、運動を続けにくい状態です。休息し、栄養を補給しましょう。", "#ff7185",
+        "ATPは筋収縮に直接使われます。糖質はATPを再合成するための重要な材料のひとつです。");
+      setText("notice", "エネルギー不足！白米で糖の貯蔵を回復しよう。");
+      log("エネルギー不足：運動を見送り。");
+      return;
+    }
+    animateLift();
+
+    if (weight === "heavy") {
+      const use = Math.min(s.glycogen, 20);
+      s.glycogen = clamp(s.glycogen - use);
+      s.atp = clamp(s.atp - 24 + (s.oxygen > 45 ? 3 : 0));
+      s.oxygen = clamp(s.oxygen - 8);
+      s.fatigue = clamp(s.fatigue + 27);
+      mechanism(
+        "高強度：解糖系の寄与が大きい",
+        "重い負荷ではATPを速く再合成する必要があり、解糖系の寄与が大きくなります。グルコース由来の物質からピルビン酸ができ、酸素供給などの条件によっては乳酸も生成されます。短時間で力を出しやすい一方、このモデルではATP消費と疲労指標の上昇を大きくしています。",
+        "#ffd166",
+        "解糖系は細胞質基質で進み、グルコース1分子あたり正味2分子のATPを得ます。実際の筋肉では有酸素呼吸も同時に働きます。"
+      );
+      setText("notice", s.fatigue >= 100 ? "疲労指標が最大！いったん休息しよう。" : "高強度トレーニング！ATPを速く使い、疲労指標が上昇。");
+      log("重いダンベル：解糖系の寄与・疲労指標が上昇。");
+    } else {
+      const isLight = weight === "light";
+      const oxygenCost = isLight ? 5 : 9;
+      const glucoseCost = isLight ? 7 : 11;
+      const atpGain = (s.oxygen >= 25 ? (isLight ? 14 : 11) : (isLight ? 5 : 3));
+      s.glycogen = clamp(s.glycogen - glucoseCost);
+      s.oxygen = clamp(s.oxygen - oxygenCost);
+      s.atp = clamp(s.atp - (isLight ? 5 : 9) + atpGain);
+      s.fatigue = clamp(s.fatigue + (s.oxygen >= 25 ? (isLight ? 2 : 5) : 10));
+      mechanism(
+        s.oxygen >= 25 ? "有酸素呼吸：ミトコンドリアが活躍" : "酸素供給が少ない：解糖系の寄与が増える",
+        s.oxygen >= 25
+          ? "酸素を利用できる条件では、解糖系で生じたピルビン酸などがミトコンドリアでの反応につながり、酸化的リン酸化によって多くのATPを再合成できます。軽〜中程度の運動を続けやすい状態を表しています。"
+          : "酸素供給のゲージが低下しています。実際には筋肉への酸素供給や需要、運動強度などが影響します。酸素が少ない状況では解糖系の寄与が相対的に大きくなりえますが、有酸素呼吸が即座に完全停止するわけではありません。",
+        s.oxygen >= 25 ? "#58d8e8" : "#ffd166",
+        "ミトコンドリア内膜の電子伝達系と酸化的リン酸化は、酸素を最終電子受容体として利用し、ATPを効率よく再合成します。糖1分子あたりのATP収量は条件や数え方で異なります。"
+      );
+      setText("notice", s.oxygen < 25 ? "酸素供給が低下。強度を下げて回復しよう。" : "リズムよく持ち上げた！ATPを再合成しながら運動。");
+      log(`${isLight ? "軽い" : "中くらいの"}ダンベル：有酸素呼吸を中心にシミュレーション。`);
+    }
+
+    if (s.fatigue >= 100) {
+      lockedUntil = Date.now() + 5000;
+      setText("notice", "⚠ 疲労指標が最大！5秒間休息して回復しよう。");
+      mechanism("休息フェーズ：回復中", "高強度の運動を続けるのが難しい状態です。実際の疲労は乳酸だけが原因ではなく、イオンバランスやエネルギー供給など複数の要因が関係します。", "#ff7185",
+        "乳酸は単なる「疲労物質」ではなく、別の組織で燃料として利用されることもあります。");
+      log("疲労指標が最大：5秒間の休息を開始。");
+      render();
+      const tick = () => {
+        const remaining = lockedUntil - Date.now();
+        if (remaining <= 0) {
+          s.fatigue = clamp(s.fatigue - 35);
+          s.oxygen = clamp(s.oxygen + 20);
+          s.atp = clamp(s.atp + 10);
+          setText("notice", "休息終了！酸素とATPが少し回復しました。");
+          log("休息終了：リソースが一部回復。");
+          render();
+        } else {
+          setTimeout(tick, Math.min(250, remaining));
+        }
+      };
+      setTimeout(tick, 250);
+    } else {
+      render();
+    }
+  }
+
+  document.querySelectorAll(".weight-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      weight = btn.dataset.weight;
+      document.querySelectorAll(".weight-btn").forEach(b => {
+        const active = b === btn;
+        b.classList.toggle("active", active);
+        b.setAttribute("aria-pressed", String(active));
+      });
+      const label = {light:"軽い", medium:"中くらい", heavy:"重い"}[weight];
+      setText("notice", `ダンベルを「${label}」に設定しました。`);
+      log(`負荷設定：${label}。`);
+    });
+  });
+
+  $("eatBtn").addEventListener("click", eat);
+  $("liftBtn").addEventListener("click", lift);
+  $("resetBtn").addEventListener("click", () => {
+    s = { ...initial };
+    lockedUntil = 0;
+    weight = "medium";
+    document.querySelectorAll(".weight-btn").forEach(b => {
+      const active = b.dataset.weight === weight;
+      b.classList.toggle("active", active);
+      b.setAttribute("aria-pressed", String(active));
+    });
+    $("character").classList.remove("lift");
+    mechanism("待機中：エネルギー代謝", "筋収縮に直接使われるのはATPです。ATPは使うとADPとリン酸に変わるため、細胞は代謝によってATPを再合成します。", "#72e0a2",
+      "ATPは細胞が使うエネルギーの受け渡し役。栄養素のエネルギーを利用して、必要なときに再合成されます。");
+    setText("notice", "リセット完了！実験を始めよう。");
+    $("log").innerHTML = "<li>システム起動：ATP・糖貯蔵・酸素を確認。</li>";
+    render();
+  });
+
+  // 酸素と疲労指標は、時間経過でもゆっくり回復する簡易モデル
+  setInterval(() => {
+    if (Date.now() >= lockedUntil) {
+      s.oxygen = clamp(s.oxygen + 1.5);
+      s.fatigue = clamp(s.fatigue - 0.7);
+      render();
+    }
+  }, 1800);
+
+  mechanism("待機中：エネルギー代謝", "筋収縮に直接使われるのはATPです。ATPは使うとADPとリン酸に変わるため、細胞は代謝によってATPを再合成します。", "#72e0a2",
+    "ATPは細胞が使うエネルギーの受け渡し役。栄養素のエネルギーを利用して、必要なときに再合成されます。");
+  render();
+})();
+</script>
+</body>
+</html>
